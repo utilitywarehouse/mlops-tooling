@@ -1,0 +1,1 @@
+from mlops_tooling.bq_connector.base_class.base_connector import BaseConnector

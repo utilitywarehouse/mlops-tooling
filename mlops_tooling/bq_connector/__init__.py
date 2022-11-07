@@ -1,0 +1,1 @@
+from mlops_tooling.bq_connector.bigquery_connector import BigQuery

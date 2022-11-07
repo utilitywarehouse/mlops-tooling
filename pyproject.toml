@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mlops-tooling"
+version = "0.1.0"
+description = "UtilityWarehouse internal MLOps tools"
+authors = ["Ben Hicks <bhicks@uw.co.uk>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+mlflow = "^1.30.0"
+google-cloud-aiplatform = "^1.18.3"
+numpy = "^1.23.4"
+pandas = "^1.5.1"
+google-cloud-bigquery = ">=1.15.0,<3.0.0dev"
+Jinja2 = "^3.1.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
