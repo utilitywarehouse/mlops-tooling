@@ -34,7 +34,7 @@ grid_search = GridSearchCV(
 grid_search.fit(train_X, train_y)
 
 best_parameters = grid_search.best_params_
-best_metrics = {“score” : grid_search.best_score_} 
+best_metrics = {"score" : grid_search.best_score_} 
 
 mlflow = ModelManager(
     tracking_uri=TRACKING_URI,
