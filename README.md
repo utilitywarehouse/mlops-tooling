@@ -77,4 +77,3 @@ BigQuery connector uses Jinja2 to enable the user to write .sql files and import
 bq = BigQuery(path = "path_to_sql_files", credentials = "ceredentials/path")
 data = bq.query("example_query.sql")
 ```
-# mlops-tooling
