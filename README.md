@@ -7,7 +7,7 @@ A package for UtilityWarehouse's internal machine learning tooling. This package
 Model manager is a tool used to link log models to MLflow and deploy them on Vertex AI. We can use it like so:
 
 ```python
-from modelmanager import ModelManager
+from mlops_tooling import ModelManager
 
 TRACKING_URI = "https://mlflow.host.site"
 GOOGLE_PROJECT = 'data-project'
