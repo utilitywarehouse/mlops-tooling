@@ -1,1 +1,1 @@
-from utils.model_manager.main import ModelManager
+from mlops_tooling.model_manager.main import ModelManager
