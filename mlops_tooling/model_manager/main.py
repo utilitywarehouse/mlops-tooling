@@ -160,6 +160,7 @@ class ModelManager:
         mlflow.set_experiment(experiment_name)
 
         with mlflow.start_run(run_name = run_name):
+            mlflow.set_tag("mlflow.runName", run_name)
             mlflow.log_params(parameters)
             mlflow.log_metrics(metrics)
             eval(f"mlflow.{model_type}.log_model(model, '{run_name}')")
