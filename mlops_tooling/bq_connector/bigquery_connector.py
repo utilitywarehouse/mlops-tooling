@@ -41,3 +41,9 @@ class BigQuery(BaseConnector):
         """
         sql = self._read_query(sql_file, **kwargs)
         return self.Connector.query(sql).to_dataframe()
+    
+    def write_query(self, table_id, dataset, job_config):
+        job = self.Connector.load_table_from_dataframe(
+            dataset, table_id, job_config=job_config
+        )
+        job.result()
