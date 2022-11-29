@@ -3,13 +3,18 @@ from google.cloud import bigquery
 from pathlib import Path
 import re
 
+try:
+    CONFIG_DIR = (
+        re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
+        + ".config/gcloud/prod.json"
+    )
+except:
+    CONFIG_DIR = "./"
 
-CONFIG_DIR = (
-    re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
-    + ".config/gcloud/prod.json"
-)
-
-SQL_DIR = str(Path().absolute().parent) + "/sql"
+try:
+    SQL_DIR = str(Path().absolute().parent) + "/sql"
+except:
+    SQL_DIR = "./sql"
 
 
 class BigQuery(BaseConnector):
