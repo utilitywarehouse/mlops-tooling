@@ -26,28 +26,63 @@ class BigQuery(BaseConnector):
         self.Connector = self._instantiate_connection()
 
     def _instantiate_connection(self):
+        """
+        Creates a connection to the BigQuery database.
+        """
         return bigquery.Client.from_service_account_json(self._credentials)
 
     def _set_path(self):
+        """
+        Sets the path to the SQL files
+        """
         return super()._set_path()
 
     def _read_query(self, sql_file, **kwargs):
+        """
+        Imports a SQL script and reads the file.
+
+        Parameters
+        ----------
+        file_name : str
+            A filename of the SQL script.
+
+        Returns
+        ----------
+        query : str
+            A string of the SQL query.
+        """
         return super()._read_query(sql_file, **kwargs)
 
-    def query(self, sql_file, **kwargs):
+    def query(self, sql_file: str, **kwargs):
         """
         Import a SQL script and output a dataframe of the results.
 
-        Args:
-            file_name: a filename of the SQL script.
+        Parameters
+        ----------
+        file_name : str
+            A filename of the SQL script.
 
-        Returns:
-            table: a pandas df of the output.
+        Returns
+        ----------
+        table: pd.DataFrame
+            A pandas df of the output.
         """
         sql = self._read_query(sql_file, **kwargs)
         return self.Connector.query(sql).to_dataframe()
     
     def write_query(self, table_id, dataset, job_config):
+        """
+        Create a new table in BigQuery containing data from a Pandas DataFrame.
+
+        Parameters
+        ----------
+        table_id : str
+            The name of the table to create/add to.
+        dataset : pd.DataFrame
+            The dataset to add the table to.
+        job_config : dict
+            A dictionary containing the configuration for the job. See Google Job Config documentation.
+        """
         job = self.Connector.load_table_from_dataframe(
             dataset, table_id, job_config=job_config
         )

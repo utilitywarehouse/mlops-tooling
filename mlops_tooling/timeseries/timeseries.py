@@ -1,5 +1,3 @@
-
-
 from typing import Optional, List
 import pandas as pd
 
@@ -19,6 +17,47 @@ class Timeseries:
         covariate_leads: Optional[List[int]] = [1],
         date_features: Optional[dict] = None,
     ):
+        """
+        A class used to create a flattened timeseries dataframe, from a time based dataframe.
+
+        Args:
+            df : pd.DataFrame
+                Pandas dataframe containing the time series data.
+            date_col : str
+                Name of the date column in the dataframe.
+            target_col : str
+                Name of the target column in the dataframe.
+            group_cols : Optional[List[str]]
+                Columns to group the data by, usually information inherent to a class. 
+                If no groups are specified, the data is assumed to be from a single class.
+            lags : Optional[List[int]]
+                Lagged target variable values to add to the dataframe. Defaults to [1].
+            prediction_steps : Optional[List[int]]
+                Steps a future model should predict if building a single model.
+                This will add a column 'step' which is linked to the output. Defaults to [1]. 
+                Currently not implemented.
+            static_covariates : Optional[List[str]]
+                Name of static covariates in the model. Defaults to None.
+            past_covariates : Optional[List[str]]
+                Name of dynamic covariates in the model for which we want to include past data.
+                Defaults to None.
+            covariate_lags : Optional[List[int]]
+                Lagged covariable values to add to the dataframe.
+                Defaults to None.
+            future_covariates : Optional[List[str]]
+                Name of dynamic covariates in the model for which we want to include future data.
+                Defaults to None.
+            covariate_leads : Optional[List[int]]
+                Leading covariable values to add to the dataframe.
+                Defaults to None.
+            date_features : Optional[dict]
+                Dictionary of date features to add to the dataframe.
+                Should be in the format {"column_name":"date_function"}.
+                Available functions can be found here under attributes at the following link: 
+                https://pandas.pydata.org/pandas-docs/version/0.23/generated/pandas.DatetimeIndex.html
+                week_of_month, is_first_week_of_month, is_last_week_of_month are also available.
+                Defaults to None.
+        """
         self.df = df.copy(deep=True).sort_values(by = date_col)
         self.date_col = date_col
         self.target_col = target_col
@@ -34,6 +73,9 @@ class Timeseries:
         self._force_correct_typings()
         
     def prepare_dataset(self) -> pd.DataFrame:
+        """
+        Flattens a timeseries dateframe into flattened X, y, and time index dataframes.
+        """
         self.add_date_info()
         self.add_target_lags() 
         
@@ -62,11 +104,52 @@ class Timeseries:
         return X, y, dt_idx
     
     def add_date_info(self) -> pd.DataFrame:
+        """
+        Converts the date column to numerous columns containing information about the date.
+        See https://pandas.pydata.org/pandas-docs/version/0.23/generated/pandas.DatetimeIndex.html for available information.
+        
+        An example of the date_features dictionary: 
+        date_features = {   
+            "month": "month",
+            "quarter": "quarter",
+            "year": "year",
+            "week_of_year": "weekofyear",
+            "week_of_month": "week_of_month",
+            "is_first_week_of_month":"is_first_week_of_month",
+            "is_last_week_of_month":"is_last_week_of_month",
+        }
+
+        Parameters
+        ----------
+        date_features : dict
+            A dictionary containing {column_name : date feature} for the date column. 
+            
+        Returns
+        ----------
+        df : pd.DataFrame
+            The original dataframe with date information added.
+        """
         if self.date_features:
             for date_feat_name, date_feat_func in self.date_features.items():
                 self.df = self.get_date_feature(self.df, self.date_col, date_feat_name, date_feat_func)
                 
     def add_target_lags(self) -> pd.DataFrame:
+        """
+        Adds the specified lags and rolling averages of the target variable as columns for each row. 
+        These columns will be called taget_col_lag_X and target_col_roll_X.
+
+        Parameters
+        ----------
+        target_col : dict
+            The target column to add lags for.
+        lags : list
+            A list of lags to add to the target column, this must be positive.
+            
+        Returns
+        ----------
+        df : pd.DataFrame
+            The original dataframe with lagged target columns added.
+        """
         for lag in self.lags:
             if self.group_cols:
                 self.df[f"{self.target_col}_lag_{lag}"] = self.df.groupby(self.group_cols)[self.target_col].shift(lag)
@@ -76,6 +159,21 @@ class Timeseries:
                 self.df[f"{self.target_col}_roll_{lag}"] = self.df[self.target_col].shift(1).rolling(lag).mean()
             
     def add_covariate_lags(self) -> pd.DataFrame:
+        """
+        Adds the specified lags for the specified covariates as columns.
+
+        Parameters
+        ----------
+        past_covariates : list
+            The covariates column to add lags for.
+        covariate_lags : list
+            A list of lags to add for the covariates, this must be positive.
+            
+        Returns
+        ----------
+        df : pd.DataFrame
+            The original dataframe with lagged covariate columns added.
+        """
         for covariate in self.past_covariates:
             for lag in self.covariate_lags:
                 if self.group_cols:
@@ -84,6 +182,21 @@ class Timeseries:
                     self.df[f"{covariate}_lag_{lag}"] = self.df[covariate].shift(lag)
                 
     def add_covariate_leads(self) -> pd.DataFrame:
+        """
+        Adds the specified leading values (i.e. future) for the specified covariates as columns.
+
+        Parameters
+        ----------
+        future_covariates : list
+            The covariates column to add leads for.
+        covariate_lads : list
+            A list of leads to add for the covariates, this must be positive.
+            
+        Returns
+        ----------
+        df : pd.DataFrame
+            The original dataframe with leading covariate columns added.
+        """
         for covariate in self.future_covariates:
             for lead in self.covariate_leads:
                 if self.group_cols:
@@ -93,6 +206,27 @@ class Timeseries:
 
     @staticmethod  
     def get_date_feature(df: pd.DataFrame, date_col: str, date_feature: str, date_feature_func: Optional[str] = None):
+        """
+        Calculates a date feature using the specified date_feature_func, and adds it as a column to the dataframe with 
+        the its name as date_feature.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            The original timeseries dataframe.
+        date_col : str
+            The date column to generate information for.
+        date_feature : str
+            The column name of the date feature to add.
+        date_feature_func : str
+            The pandas function to pull the date feature from the column. 
+            For week_of_month, is_last_week_of_month, is_first_week_of_month this is a custom function.
+            
+        Returns
+        ----------
+        df : pd.DataFrame
+            The original dataframe with the date feature added.
+        """
         if date_feature == 'week_of_month':
             df['week_start_date'] = df[date_col].dt.to_period('W-SUN').dt.start_time
             
@@ -134,6 +268,9 @@ class Timeseries:
         return df
 
     def _force_correct_typings(self):
+        """
+        Forces the date column to be a pandas datetime type, and ensures any group columns are category types.
+        """
         try:
             self.df[self.date_col] = pd.to_datetime(self.df[self.date_col])
         except:

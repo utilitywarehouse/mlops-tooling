@@ -32,6 +32,14 @@ class ModelManager:
 
     @staticmethod
     def set_google_credentials(google_credentials: str = None):
+        """
+        Sets Google Cloud credentials from input, or to a default location, in ~/.config. This default only works for Mac.
+
+        Parameters
+        ----------
+        google_credentials : str
+            The path to the Google Cloud credentials file.
+        """
         if not google_credentials:
             google_credentials = (
                 re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
@@ -44,10 +52,38 @@ class ModelManager:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_credentials
 
     def model_info(self, model_name: str):
+        """
+        Pulls information about a model from MLflow.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model to pull information about.
+            
+        Returns
+        ----------
+        model_info : dict
+            A dictionary containing information about the model.
+        """
         model_info = self.mlflow_client.get_registered_model(model_name)
         return model_info
 
     def model_uri(self, model_name: str, model_stage: str = "Production"):
+        """
+        Finds the Google Cloud URI of a model in MLflow.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model to return the URI for.
+        model_stage : str
+            The stage of the model to return the URI for.
+
+        Returns
+        ----------
+        model_uri : str
+            The Google Cloud Storage URI for the model.
+        """
         model_info = self.model_info(model_name)
         model_versions = model_info.latest_versions
 
@@ -68,6 +104,25 @@ class ModelManager:
         model_display_name: str = None,
         model_stage: str = "Production",
     ):
+        """
+        Uploads an MLflow model to a Vertex AI, allowing it to be attached to an endpoint.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model in MLflow to upload to Vertex AI.
+        model_description : str
+            A description of the model, which will be displayed in Vertex AI.
+        model_display_name : str, optional
+            Chosen name of the model, which will be displayed in Vertex AI. This defaults to the model name.
+        model_stage : str
+            The stage of the model to upload. Can be production or staging.
+
+        Returns
+        ----------
+        model_url : str
+            The Vertex AI url for the model.
+        """
         model_display_name = model_display_name if model_display_name else model_name
 
         model_uri = self.model_uri(model_name=model_name, model_stage=model_stage)
@@ -93,6 +148,19 @@ class ModelManager:
         return model_url
 
     def create_model_endpoint(self, model_name: str):
+        """
+        Creates a Vertex AI endpoint for a model in MLflow.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model in MLflow to upload to Vertex AI, which will be used to name the endpoint.
+
+        Returns
+        ----------
+        endpoint_id : str
+            The Vertex AI endpoint ID for the model.
+        """
         endpoint = aiplatform.Endpoint.create(
             display_name=model_name,
             project=self.google_project,
@@ -103,7 +171,17 @@ class ModelManager:
 
         return endpoint_id
 
-    def deploy_model(self, model_url, endpoint_id):
+    def deploy_model(self, model_url: str, endpoint_id: str):
+        """
+        Deploys a model in Vertex AI to a Vertex AI endpoint.
+
+        Parameters
+        ----------
+        model_url : str
+            The url of the model uploaded to Vertex AI.
+        endpoint_id : str
+            The Vertex AI endpoint ID for the model to be deployed to.
+        """
         client_options = {"api_endpoint": self.api_endpoint}
 
         client = aiplatform.gapic.EndpointServiceClient(client_options=client_options)
@@ -138,6 +216,21 @@ class ModelManager:
         model_display_name: str = None,
         model_stage: str = "Production",
     ):
+        """
+        Uploads an MLflow model to a Vertex AI, creates an endpoint for the model,
+        and deploys the model to the endpoint.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model in MLflow to upload to Vertex AI.
+        model_description : str
+            A description of the model, which will be displayed in Vertex AI.
+        model_display_name : str, optional
+            Chosen name of the model, which will be displayed in Vertex AI. This defaults to the model name.
+        model_stage : str
+            The stage of the model to upload. Can be production or staging.
+        """
         model_url = self.upload_model(
             model_name, model_description, model_display_name, model_stage
         )
@@ -146,6 +239,14 @@ class ModelManager:
         self.deploy_model(model_url, endpoint_id)
 
     def create_new_experiment(self, experiment_name):
+        """
+        Creates a new experiment in MLflow.
+
+        Parameters
+        ----------
+        experiment_name : str
+            The name of the experiment to create in MLflow.
+        """
         mlflow.create_experiment(experiment_name)
 
     def log_results(
@@ -157,6 +258,24 @@ class ModelManager:
         metrics: dict,
         model_type: str = "sklearn",
     ):
+        """
+        Logs a model to MLflow.
+
+        Parameters
+        ----------
+        experiment_name : str
+            Name of the experiment to log results to.
+        run_name : str
+            Name of the specific run to log.
+        model : sklearn-style model
+            The model file to log to MLflow.
+        parameters : dict
+            A dictionary of parameters used to create the model, which will be saved to MLflow.
+        metrics : dict
+            A dictionary of model metrics, which will be saved to MLflow.
+        model_type : str, default "sklearn"
+            The type of the model to save, usually sklearn, however this can be lightgbm, xgboost, etc.
+        """
         mlflow.set_experiment(experiment_name)
 
         with mlflow.start_run(run_name = run_name):
