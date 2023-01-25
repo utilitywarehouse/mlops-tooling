@@ -40,4 +40,6 @@ example_ts = Timeseries(
 X, y, time_idx = example_ts.prepare_dataset()
 ```
 
-This will take a datset with a time index, and flattened it to contain the lags specified in the lag inputs in the X dataset, and the target in the y dataset. The class forces your time column to be a datetime, and ensures your group columns are categories, which allows the output to be plugged straight into a gradient boosted model.
+This will take a dataset with a time index, and flatten it to contain the lags specified in the lag inputs in the X dataset, and the target in the y dataset.
+
+The class handles any internal groupings in your dataset, and also forces your time column to be a datetime, and ensures your group columns are categories, which allows the output to be plugged straight into a gradient boosted model.
