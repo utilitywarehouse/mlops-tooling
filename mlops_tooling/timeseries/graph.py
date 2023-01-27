@@ -39,12 +39,12 @@ def plot_forecast(
     x = df[x]
     
     if y:
-        y = df[y]
-        plt.plot(x, y, linewidth=1, color="black", label=f"{y}")
+        y_vals = df[y]
+        plt.plot(x, y_vals, linewidth=1, color="black", label=f"{y}")
     
     if y_hat:
-        y_hat = df[y_hat]
-        plt.plot(x, y_hat, linewidth=1, color="black", label=f"Predicted {y}", linestyle='dashed')
+        y_hat_vals = df[y_hat]
+        plt.plot(x, y_hat_vals, linewidth=1, color="black", label=f"Predicted {y}", linestyle='dashed')
     
     if (y_upper is not None)&(y_lower is not None):
         lower_bound = df[y_upper]
