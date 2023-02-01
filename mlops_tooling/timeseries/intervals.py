@@ -37,7 +37,7 @@ def bootstrap_prediction_interval(model, x_val: pd.DataFrame, y_val: pd.DataFram
     
     return lower_band, upper_band
 
-def rmse_prediction_interval(model, x_val: pd.DataFrame, y_val: pd.pd.DataFrame, alpha: float = 0.05):
+def rmse_prediction_interval(model, x_val: pd.DataFrame, y_val: pd.DataFrame, alpha: float = 0.05):
     """
     Calculates residuals from a validation set, and uses RMSE to calculate a prediction interval banding.
     Only use unseen values to generate the prediction interval banding.
