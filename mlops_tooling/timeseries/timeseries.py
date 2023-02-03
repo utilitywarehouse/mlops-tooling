@@ -1,5 +1,7 @@
 from typing import Optional, List
 import pandas as pd
+import numpy as np
+from scipy import stats
 
 class Timeseries:
     def __init__(
@@ -16,6 +18,10 @@ class Timeseries:
         future_covariates: Optional[List[str]] = None,
         covariate_leads: Optional[List[int]] = [1],
         date_features: Optional[dict] = None,
+        seasonal_periods: Optional[List[int]] = None,
+        seasonal_order: Optional[int] = None,
+        seasonal_trend: Optional[bool] = False,
+        seasonal_trend_order: Optional[int] = None,
     ):
         """
         A class used to create a flattened timeseries dataframe, from a time based dataframe.
@@ -69,6 +75,18 @@ class Timeseries:
         self.future_covariates = future_covariates
         self.covariate_leads = covariate_leads
         self.date_features = date_features
+        self.seasonal_periods = seasonal_periods
+        self.seasonal_trend = seasonal_trend
+        
+        if seasonal_order:
+            self.seasonal_order = seasonal_order
+        elif seasonal_periods:
+            self.seasonal_order = 4
+            
+        if seasonal_trend_order:
+            self.seasonal_trend_order = seasonal_trend_order
+        elif seasonal_trend:
+            self.seasonal_trend_order = 1
         
         self._force_correct_typings()
         
@@ -94,6 +112,13 @@ class Timeseries:
         
         else:
             columns_to_drop = []
+            
+        if self.seasonal_periods:
+            for seasonal_period in self.seasonal_periods:
+                self.add_fourier_harmonics(self.seasonal_order, seasonal_period)
+                
+        if self.seasonal_trend:
+            self.add_seasonal_trend(self.seasonal_trend_order)
             
         flattened_df = self.df.drop(columns = columns_to_drop).dropna().reset_index(drop=True)
         
@@ -281,3 +306,31 @@ class Timeseries:
                 self.df[column] = self.df[column].astype('category')
         except:
             pass
+    
+    def add_fourier_harmonics(self, seasonal_order, seasonal_period):
+        n = self.df.shape[0]
+        x = 2 * np.pi * np.arange(1, seasonal_order + 1) / seasonal_period
+        t = np.arange(1, n + 1)
+        x = x * t[:, None]
+        
+        fourier_series = np.concatenate((np.cos(x), np.sin(x)), axis=1)
+        column_names = [f"fourier_period_{seasonal_period}_cos_{i+1}" for i in range(seasonal_order)] + [f"fourier_period_{seasonal_period}_sin_{i+1}" for i in range(seasonal_order)]
+        
+        fourier_df = pd.DataFrame(fourier_series, columns=column_names)
+        
+        self.df = pd.concat([self.df, fourier_df], axis=1)
+    
+    def add_seasonal_trend(self, seasonal_trend_order):
+        y = self.df[self.df[self.target_col] > 0][self.target_col]
+        n = len(y)
+        x = np.arange(1, n + 1) ** seasonal_trend_order
+        
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+        
+        n = self.df.shape[0]
+        x = np.arange(1, n + 1) ** seasonal_trend_order
+        
+        trend = slope * x * r_value + intercept
+        
+        self.df['sign_ups'] = self.df['sign_ups'] / trend
+        self.df['trend'] = trend
