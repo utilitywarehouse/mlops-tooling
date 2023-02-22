@@ -72,7 +72,9 @@ def create_date_table(
         fy_week_df.groupby(["financial_year"]).cumcount() + 1
     )
 
-    df = df.merge(fy_date_df).merge(fy_week_df)[
+    df = df.merge(fy_date_df, left_on="date", right_on="date").merge(
+        fy_week_df, left_on="week_start_date", right_on="week_start_date"
+    )[
         [
             "date",
             "week_start_date",
