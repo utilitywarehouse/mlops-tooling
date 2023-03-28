@@ -53,6 +53,23 @@ class BigQuery(BaseConnector):
         """
         return super()._read_query(sql_file, **kwargs)
 
+    def table(self, table_name: str):
+        """
+        Returns all values from a table and outputs a dataframe of the results.
+
+        Parameters
+        ----------
+        table_name : str
+            BigQuery table name.
+
+        Returns
+        ----------
+        table: pd.DataFrame
+            A pandas df of the output.
+        """
+        sql = f"select * from {table_name}"
+        return self.Connector.query(sql).to_dataframe()
+
     def query(self, sql_file: str, **kwargs):
         """
         Import a SQL script and output a dataframe of the results.
@@ -69,7 +86,7 @@ class BigQuery(BaseConnector):
         """
         sql = self._read_query(sql_file, **kwargs)
         return self.Connector.query(sql).to_dataframe()
-    
+
     def write_query(self, table_id, dataset, job_config):
         """
         Create a new table in BigQuery containing data from a Pandas DataFrame.

@@ -1,24 +1,22 @@
 [tool.poetry]
 name = "mlops-tooling"
 version = "0.1.0"
-description = "UtilityWarehouse internal MLOps tools"
+description = "UW internal MLOps tools, packages, and functions"
 authors = ["Ben Hicks <bhicks@uw.co.uk>"]
-license = "MIT"
+license = "MIT 2.0"
+readme = "README.md"
+packages = [{include = "mlops_tooling"}]
 
 [tool.poetry.dependencies]
-python = ">3.8,<3.11"
-mlflow = "^1.30.0"
-google-cloud-aiplatform = "^1.18.3"
-numpy = "^1.23.4"
-pandas = "^1.5.1"
-google-cloud-bigquery = ">=1.15.0,<3.0.0dev"
+python = "^3.8"
+numpy = "^1.24.2"
+pandas = "^1.5.3"
+mlflow = "^2.2.2"
+google-cloud-aiplatform = "^1.23.0"
 Jinja2 = "^3.1.2"
-pyarrow = "^10.0.0"
-matplotlib = "^3.6.3"
-scipy = "^1.10.0"
+pyarrow = "^11.0.0"
 
-[tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
