@@ -319,35 +319,35 @@ class ModelManager:
                 mlflow.log_metrics(metrics)
 
             if override_artifacts:
+                if override_path:
+                    gcs_uri = override_path
+                else:
+                    gcs_uri = mlflow.get_artifact_uri()
+
                 mlflow.end_run()
 
                 if artifacts:
-                    if override_path:
-                        gcs_uri = override_path
-                    else:
-                        gcs_uri = mlflow.get_artifact_uri()
+                    ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
+                    ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
+                    gcs_uri = (
+                        "mlflow/"
+                        + "/".join(gcs_uri.split(":/")[1:])
+                        + "/"
+                        + run_name
+                        + "/data/model"
+                    )
 
-                        ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
-                        ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
-                        gcs_uri = (
-                            "mlflow/"
-                            + "/".join(gcs_uri.split(":/")[1:])
-                            + "/"
-                            + run_name
-                            + "/data/model"
-                        )
+                    logger.info(f"Overriding to the following uri: {gcs_uri}")
 
-                        logger.info(f"Overriding to the following uri: {gcs_uri}")
+                    self.override_upload_artifacts(
+                        self.google_credentials,
+                        self.google_project,
+                        self.gcs_bucket.split("//")[1],
+                        gcs_uri,
+                        artifacts,
+                    )
 
-                        self.override_upload_artifacts(
-                            self.google_credentials,
-                            self.google_project,
-                            self.gcs_bucket.split("//")[1],
-                            gcs_uri,
-                            artifacts,
-                        )
-
-                        logger.info(f"Artifacts uploaded.")
+                    logger.info(f"Artifacts uploaded.")
 
             else:
                 mlflow.log_artifacts(artifacts)
