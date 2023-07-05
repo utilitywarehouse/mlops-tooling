@@ -393,5 +393,5 @@ class ModelManager:
             else:
                 filename = local_file.split("/")[-1]
                 blob = bucket.blob(gcs_path + "/" + filename)
-                blob.upload_from_filename(local_file)
+                blob.upload_from_filename(local_file, timeout=600)
                 logger.info(f"Wrote object to {gcs_path}")
