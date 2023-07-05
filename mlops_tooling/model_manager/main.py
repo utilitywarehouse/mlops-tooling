@@ -350,7 +350,8 @@ class ModelManager:
                     logger.info(f"Artifacts uploaded.")
 
             else:
-                mlflow.log_artifacts(artifacts)
+                if artifacts:
+                    mlflow.log_artifacts(artifacts)
 
                 eval(f"mlflow.{model_type}.log_model(model, '{run_name}')")
 
