@@ -1,9 +1,15 @@
 from google.cloud import aiplatform
+from google.cloud import storage
 from pathlib import Path
+import glob
 import re
 import os
 import mlflow
 from mlflow import MlflowClient
+from mlflow.models.signature import infer_signature
+from mlops_tooling.logger.main import get_logger
+
+logger = get_logger(__name__)
 
 
 class ModelManager:
@@ -24,14 +30,33 @@ class ModelManager:
         self.api_location = api_location
         self.serving_container_image_uri = serving_container_image_uri
 
-        self.set_google_credentials(google_credentials)
+        if google_credentials:
+            self.google_credentials = google_credentials
+        else:
+            self.google_credentials = self.get_google_credentials(self.google_project)
+
+        self.set_google_credentials(self.google_credentials)
         mlflow.set_tracking_uri(tracking_uri)
         self.mlflow_client = MlflowClient()
 
         aiplatform.init(project=self.google_project, location=self.api_location)
 
     @staticmethod
-    def set_google_credentials(google_credentials: str = None):
+    def get_google_credentials(project):
+        if "dev" in project:
+            proj = "dev"
+        else:
+            proj = "prod"
+
+        google_credentials = (
+            re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
+            + f".config/gcloud/{proj}.json"
+        )
+
+        return google_credentials
+
+    @staticmethod
+    def set_google_credentials(google_credentials: str):
         """
         Sets Google Cloud credentials from input, or to a default location, in ~/.config. This default only works for Mac.
 
@@ -40,12 +65,6 @@ class ModelManager:
         google_credentials : str
             The path to the Google Cloud credentials file.
         """
-        if not google_credentials:
-            google_credentials = (
-                re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
-                + ".config/gcloud/dev.json"
-            )
-
         try:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
         except:
@@ -59,7 +78,7 @@ class ModelManager:
         ----------
         model_name : str
             The name of the model to pull information about.
-            
+
         Returns
         ----------
         model_info : dict
@@ -249,14 +268,23 @@ class ModelManager:
         """
         mlflow.create_experiment(experiment_name)
 
+    def get_signature(model, X):
+        signature = infer_signature(X, model.predict(X))
+
+        return signature
+
     def log_results(
         self,
         experiment_name,
         run_name,
         model,
-        parameters: dict,
-        metrics: dict,
+        signature=None,
+        parameters: dict = None,
+        metrics: dict = None,
+        artifacts: str = None,
         model_type: str = "sklearn",
+        override_artifacts: bool = False,
+        override_path: str = None,
     ):
         """
         Logs a model to MLflow.
@@ -277,9 +305,92 @@ class ModelManager:
             The type of the model to save, usually sklearn, however this can be lightgbm, xgboost, etc.
         """
         mlflow.set_experiment(experiment_name)
+        # artifact_uri = mlflow.get_artifact_uri()
+        # mlflow.get_
+        # logger.info(artifact_uri)
 
-        with mlflow.start_run(run_name = run_name):
+        with mlflow.start_run(run_name=run_name):
             mlflow.set_tag("mlflow.runName", run_name)
-            mlflow.log_params(parameters)
-            mlflow.log_metrics(metrics)
-            eval(f"mlflow.{model_type}.log_model(model, '{run_name}')")
+
+            if parameters:
+                mlflow.log_params(parameters)
+
+            if metrics:
+                mlflow.log_metrics(metrics)
+
+            if override_artifacts:
+                mlflow.end_run()
+
+                if artifacts:
+                    if override_path:
+                        gcs_uri = override_path
+                    else:
+                        gcs_uri = mlflow.get_artifact_uri()
+
+                        ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
+                        ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
+                        gcs_uri = (
+                            "mlflow/"
+                            + "/".join(gcs_uri.split(":/")[1:])
+                            + "/"
+                            + run_name
+                            + "/data/model"
+                        )
+
+                        logger.info(f"Overriding to the following uri: {gcs_uri}")
+
+                        self.override_upload_artifacts(
+                            self.google_credentials,
+                            self.google_project,
+                            self.gcs_bucket.split("//")[1],
+                            gcs_uri,
+                            artifacts,
+                        )
+
+                        logger.info(f"Artifacts uploaded.")
+
+            else:
+                mlflow.log_artifacts(artifacts)
+
+                eval(f"mlflow.{model_type}.log_model(model, '{run_name}')")
+
+    def override_upload_artifacts(
+        self,
+        service_account: str,
+        project: str,
+        bucket_name: str,
+        gcs_path: str,
+        local_path: str,
+    ):
+        """
+        Uploads a local folder to GCS.
+
+        Args:
+            service_account (str): Location of your SA.
+            project (str): Name of the project where you GCS bucket is, e.g. "uw-example-project"
+            bucket_name (str): Name of the bucket your want to upload to, e.g. "uw-example-bucket"
+            gcs_path (str): Name of the location in the bucket you want to save to , e.g. "model-1"
+            local_path (str): Folder name to upload.
+        """
+        client = storage.Client.from_service_account_json(
+            json_credentials_path=service_account, project=project
+        )
+        bucket = client.bucket(bucket_name)
+
+        assert os.path.isdir(local_path)
+
+        for local_file in glob.glob(local_path + "/**"):
+            if not os.path.isfile(local_file):
+                logger.info(f"Found folder {local_file}, writing to to {gcs_path}")
+                self.override_upload_artifacts(
+                    service_account,
+                    project,
+                    bucket_name,
+                    gcs_path + "/" + os.path.basename(local_file),
+                    local_file,
+                )
+            else:
+                filename = local_file.split("/")[-1]
+                blob = bucket.blob(gcs_path + "/" + filename)
+                blob.upload_from_filename(local_file)
+                logger.info(f"Wrote object to {gcs_path}")
