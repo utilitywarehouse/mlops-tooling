@@ -5,6 +5,7 @@ import glob
 import re
 import os
 import mlflow
+import uuid
 from mlflow import MlflowClient
 from mlflow.models.signature import infer_signature
 from mlops_tooling.logger.main import get_logger
@@ -323,20 +324,21 @@ class ModelManager:
                 gcs_uri = mlflow.get_artifact_uri()
 
                 if not model_artifact_folder:
+                    sha = str(uuid.uuid4().hex)
                     ## this dumps our model to a model folder
-                    model_artifact_folder = "mlflow-model"
+                    model_artifact_folder = f"mlflow-models/{sha}"
                     logger.info(
                         f"Saving model to the following folder: {model_artifact_folder}"
                     )
-                    eval(f"mlflow.{model_type}.save_model(model, 'mlflow-model')")
+                    eval(
+                        f"mlflow.{model_type}.save_model(model, '{model_artifact_folder}')"
+                    )
 
                 mlflow.end_run()
 
                 ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
                 ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
-                gcs_uri = (
-                    "mlflow/" + "/".join(gcs_uri.split(":/")[1:]) + "/" + run_name + "/"
-                )
+                gcs_uri = "mlflow/" + "/".join(gcs_uri.split(":/")[1:]) + "/" + run_name
 
                 logger.info(f"Overriding to the following uri: {gcs_uri}")
 
