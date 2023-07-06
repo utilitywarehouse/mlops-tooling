@@ -216,6 +216,7 @@ class ModelManager:
         }
 
         traffic_split = {"0": 100}
+
         endpoint = client.endpoint_path(
             project=self.google_project,
             location=self.api_location,
@@ -283,8 +284,8 @@ class ModelManager:
         metrics: dict = None,
         artifacts: str = None,
         model_type: str = "sklearn",
-        override_artifacts: bool = False,
-        override_path: str = None,
+        override_model_artifacts: bool = False,
+        model_artifact_folder: str = None,
     ):
         """
         Logs a model to MLflow.
@@ -318,36 +319,36 @@ class ModelManager:
             if metrics:
                 mlflow.log_metrics(metrics)
 
-            if override_artifacts:
-                if override_path:
-                    gcs_uri = override_path
-                else:
-                    gcs_uri = mlflow.get_artifact_uri()
+            if override_model_artifacts:
+                gcs_uri = mlflow.get_artifact_uri()
+
+                if not model_artifact_folder:
+                    ## this dumps our model to a model folder
+                    model_artifact_folder = "mlflow-model"
+                    logger.info(
+                        f"Saving model to the following folder: {model_artifact_folder}"
+                    )
+                    eval(f"mlflow.{model_type}.save_model(model, 'mlflow-model')")
 
                 mlflow.end_run()
 
-                if artifacts:
-                    ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
-                    ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
-                    gcs_uri = (
-                        "mlflow/"
-                        + "/".join(gcs_uri.split(":/")[1:])
-                        + "/"
-                        + run_name
-                        + "/data/model"
-                    )
+                ## The above returns a URI like so: 'gs://bucket/mlflow/experiment_id/run_id/artifacts'
+                ## We remove the gs://bucket from it and add in /run_name/model/data to the end to ensure our folder ends up in the correct place.
+                gcs_uri = (
+                    "mlflow/" + "/".join(gcs_uri.split(":/")[1:]) + "/" + run_name + "/"
+                )
 
-                    logger.info(f"Overriding to the following uri: {gcs_uri}")
+                logger.info(f"Overriding to the following uri: {gcs_uri}")
 
-                    self.override_upload_artifacts(
-                        self.google_credentials,
-                        self.google_project,
-                        self.gcs_bucket.split("//")[1],
-                        gcs_uri,
-                        artifacts,
-                    )
+                self.override_upload_artifacts(
+                    self.google_credentials,
+                    self.google_project,
+                    self.gcs_bucket.split("//")[1],
+                    gcs_uri,
+                    model_artifact_folder,
+                )
 
-                    logger.info(f"Artifacts uploaded.")
+                logger.info(f"Model uploaded.")
 
             else:
                 if artifacts:
