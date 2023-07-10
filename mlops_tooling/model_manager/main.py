@@ -44,32 +44,23 @@ class ModelManager:
 
     @staticmethod
     def get_google_credentials(project):
-        if "dev" in project:
-            proj = "dev"
+        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+            return os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+
         else:
-            proj = "prod"
+            if "dev" in project:
+                proj = "dev"
+            else:
+                proj = "prod"
 
-        google_credentials = (
-            re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
-            + f".config/gcloud/{proj}.json"
-        )
+            google_credentials = (
+                re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
+                + f".config/gcloud/{proj}.json"
+            )
 
-        return google_credentials
-
-    @staticmethod
-    def set_google_credentials(google_credentials: str):
-        """
-        Sets Google Cloud credentials from input, or to a default location, in ~/.config. This default only works for Mac.
-
-        Parameters
-        ----------
-        google_credentials : str
-            The path to the Google Cloud credentials file.
-        """
-        try:
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
-        except:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_credentials
+
+            return google_credentials
 
     def model_info(self, model_name: str):
         """
