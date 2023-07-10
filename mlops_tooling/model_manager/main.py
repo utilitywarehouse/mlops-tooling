@@ -88,7 +88,18 @@ class ModelManager:
         model_info = self.mlflow_client.get_registered_model(model_name)
         return model_info
 
-    def model_uri(self, model_name: str, model_stage: str = "Production"):
+    def model_location(self, model_type: str):
+        if model_type == "tensorflow":
+            return "/data/model"
+        else:
+            return ""
+
+    def model_uri(
+        self,
+        model_name: str,
+        model_type: str = "sklearn",
+        model_stage: str = "Production",
+    ):
         """
         Finds the Google Cloud URI of a model in MLflow.
 
@@ -114,7 +125,8 @@ class ModelManager:
             ].source,
         )[1]
 
-        model_uri = self.gcs_bucket + "/mlflow" + uri_snippet
+        model_location = self.model_location(model_type=model_type)
+        model_uri = self.gcs_bucket + "/mlflow" + uri_snippet + model_location
         return model_uri
 
     def upload_model(
@@ -122,6 +134,7 @@ class ModelManager:
         model_name: str,
         model_description: str,
         model_display_name: str = None,
+        model_type: str = "sklearn",
         model_stage: str = "Production",
     ):
         """
@@ -145,7 +158,9 @@ class ModelManager:
         """
         model_display_name = model_display_name if model_display_name else model_name
 
-        model_uri = self.model_uri(model_name=model_name, model_stage=model_stage)
+        model_uri = self.model_uri(
+            model_name=model_name, model_stage=model_stage, model_type=model_type
+        )
 
         model = aiplatform.Model.upload(
             display_name=model_display_name,
