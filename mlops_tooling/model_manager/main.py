@@ -250,6 +250,7 @@ class ModelManager:
         model_name: str,
         model_description: str,
         model_display_name: str = None,
+        model_type: str = "sklearn",
         model_stage: str = "Production",
     ):
         """
@@ -268,7 +269,7 @@ class ModelManager:
             The stage of the model to upload. Can be production or staging.
         """
         model_url = self.upload_model(
-            model_name, model_description, model_display_name, model_stage
+            model_name, model_description, model_display_name, model_type, model_stage
         )
         endpoint_id = self.create_model_endpoint(model_name)
 
