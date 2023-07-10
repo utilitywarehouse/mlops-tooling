@@ -34,7 +34,7 @@ class ModelManager:
         if google_credentials:
             self.google_credentials = google_credentials
         else:
-            self.google_credentials = self.get_google_credentials(self.google_project)
+            self.google_credentials = self.set_google_credentials(self.google_project)
 
         self.set_google_credentials(self.google_credentials)
         mlflow.set_tracking_uri(tracking_uri)
