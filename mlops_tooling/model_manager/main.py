@@ -156,6 +156,7 @@ class ModelManager:
         model_url : str
             The Vertex AI url for the model.
         """
+        assert model_stage in ["Staging", "Production"]
         model_display_name = model_display_name if model_display_name else model_name
 
         model_uri = self.model_uri(
