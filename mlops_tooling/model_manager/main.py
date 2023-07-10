@@ -43,7 +43,7 @@ class ModelManager:
         aiplatform.init(project=self.google_project, location=self.api_location)
 
     @staticmethod
-    def get_google_credentials(project):
+    def set_google_credentials(project):
         if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
             return os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
 
