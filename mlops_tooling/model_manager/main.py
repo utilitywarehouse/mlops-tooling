@@ -22,14 +22,12 @@ class ModelManager:
         google_credentials: str = None,
         api_location: str = "europe-west2",
         api_endpoint: str = "europe-west2-aiplatform.googleapis.com",
-        serving_container_image_uri: str = "europe-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-0:latest",
     ):
         self.tracking_uri = tracking_uri
         self.google_project = google_project
         self.gcs_bucket = gcs_bucket
         self.api_endpoint = api_endpoint
         self.api_location = api_location
-        self.serving_container_image_uri = serving_container_image_uri
 
         if google_credentials:
             self.google_credentials = google_credentials
@@ -127,6 +125,7 @@ class ModelManager:
         model_display_name: str = None,
         model_type: str = "sklearn",
         model_stage: str = "Production",
+        serving_container_image_uri: str = "europe-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-0:latest",
     ):
         """
         Uploads an MLflow model to a Vertex AI, allowing it to be attached to an endpoint.
@@ -158,7 +157,7 @@ class ModelManager:
             display_name=model_display_name,
             description=model_description,
             artifact_uri=model_uri,
-            serving_container_image_uri=self.serving_container_image_uri,
+            serving_container_image_uri=serving_container_image_uri,
             sync=True,
         )
 
@@ -244,6 +243,7 @@ class ModelManager:
         model_display_name: str = None,
         model_type: str = "sklearn",
         model_stage: str = "Production",
+        serving_container_image_uri: str = "europe-docker.pkg.dev/vertex-ai/prediction/sklearn-cpu.1-0:latest",
     ):
         """
         Uploads an MLflow model to a Vertex AI, creates an endpoint for the model,
@@ -261,7 +261,12 @@ class ModelManager:
             The stage of the model to upload. Can be production or staging.
         """
         model_url = self.upload_model(
-            model_name, model_description, model_display_name, model_type, model_stage
+            model_name,
+            model_description,
+            model_display_name,
+            model_type,
+            model_stage,
+            serving_container_image_uri,
         )
         endpoint_id = self.create_model_endpoint(model_name)
 
