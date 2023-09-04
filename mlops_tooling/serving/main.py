@@ -17,6 +17,7 @@ def create_batch_run(
     gcs_source_uri: str,
     predictions_format: str,
     gcs_destination_output_uri_prefix: str,
+    batch_size: int = 64,
     machine_type: str =  "n1-standard-2",
     accelerator_type: str = None,
     accelerator_count: int = 0,
@@ -39,6 +40,7 @@ def create_batch_run(
             machine_type = machine_type,
             accelerator_type = accelerator_type,
             accelerator_count = accelerator_count,
+            batch_size = batch_size
         )
         
     else:
@@ -48,10 +50,10 @@ def create_batch_run(
             instances_format = instances_format,
             gcs_destination_prefix = gcs_destination_output_uri_prefix,
             predictions_format = predictions_format,
-            machine_type = machine_type
+            machine_type = machine_type,
+            batch_size = batch_size
         )
-        
-    
+
     return batch_prediction_job
 
 def create_batch_job(
