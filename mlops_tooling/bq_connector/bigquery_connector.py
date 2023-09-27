@@ -70,7 +70,7 @@ class BigQuery(BaseConnector):
         sql = f"select * from {table_name}"
         return self.Connector.query(sql).to_dataframe()
 
-    def query(self, sql_file: str, **kwargs):
+    def query(self, sql_file: str, create_bqstorage_client: bool = False, **kwargs):
         """
         Import a SQL script and output a dataframe of the results.
 
@@ -85,7 +85,9 @@ class BigQuery(BaseConnector):
             A pandas df of the output.
         """
         sql = self._read_query(sql_file, **kwargs)
-        return self.Connector.query(sql).to_dataframe()
+        return self.Connector.query(sql).to_dataframe(
+            create_bqstorage_client=create_bqstorage_client
+        )
 
     def write_query(self, table_id, dataset, job_config):
         """
