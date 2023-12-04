@@ -1,13 +1,13 @@
 import pandas as pd
 
-from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import precision_recall_curve, roc_curve
 
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def find_optimal_threshold(y_true, y_scores):
+def find_optimal_pr_threshold(y_true, y_scores):
     precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
 
     f1_scores = 2 * (precision * recall) / (precision + recall)
@@ -37,6 +37,42 @@ def find_optimal_threshold(y_true, y_scores):
         xaxis_title="Recall",
         yaxis_title="Precision",
         title="Precision-Recall Curve with Optimal Threshold",
+        showlegend=True,
+    )
+
+    fig.show()
+
+    return optimal_threshold
+
+
+def find_optimal_auc_threshold(y_true, y_scores):
+    fpr, tpr, thresholds = roc_curve(y_true, y_scores, drop_intermediate=False)
+    youden_j = tpr - fpr
+
+    optimal_threshold_index = youden_j.argmax()
+    optimal_threshold = thresholds[optimal_threshold_index]
+
+    # Create figure
+    fig = go.Figure()
+
+    # Plot Precision-Recall Curve
+    fig.add_trace(go.Scatter(x=fpr, y=tpr, mode="lines", name="ROC Curve"))
+
+    # Highlight optimal threshold point
+    fig.add_trace(
+        go.Scatter(
+            x=[fpr[optimal_threshold_index]],
+            y=[tpr[optimal_threshold_index]],
+            mode="markers",
+            marker=dict(color="red", symbol="circle", size=10),
+            name="Optimal Threshold",
+        )
+    )
+
+    fig.update_layout(
+        xaxis_title="False positive rate",
+        yaxis_title="True positive rate",
+        title="ROC Curve with Optimal Threshold",
         showlegend=True,
     )
 
