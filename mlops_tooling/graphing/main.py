@@ -131,6 +131,7 @@ def create_area_chart(
 def create_area_charts(
     dataset: pd.DataFrame,
     title: str,
+    subtitles: str,
     x1: str,
     y1: str,
     x2: str,
@@ -141,7 +142,7 @@ def create_area_charts(
     """
     Creates two area charts side by side.
     """
-    fig = make_subplots(rows=1, cols=2, subplot_titles=(title))
+    fig = make_subplots(rows=1, cols=2, subplot_titles=subtitles)
 
     fig.add_trace(
         go.Scatter(
@@ -170,6 +171,7 @@ def create_area_charts(
         height=height,
         showlegend=False,
         template="simple_white",
+        title_text=title,
     )
 
     return fig
