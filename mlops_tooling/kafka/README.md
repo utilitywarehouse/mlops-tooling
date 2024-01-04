@@ -2,6 +2,9 @@
 
 Here are our Kafka Readers and Writers. We assume when using Kafka we'll always need Timestamps, Events, and Any. We'll have to define our package whenever we use them.
 
+Note: to compile a proto file you need to install protobuf like so:
+```brew install protobuff```
+
 An example package proto file looks like so:
 
 ```proto3

@@ -2,8 +2,8 @@ from confluent_kafka import Producer
 from datetime import datetime
 from abc import ABC, abstractmethod
 
-from mlops_tooling.kafka.any_pb import Any
-from mlops_tooling.kafka.timestamp_pb import Timestamp
+from mlops_tooling.kafka.any_pb2 import Any
+from mlops_tooling.kafka.timestamp_pb2 import Timestamp
 from mlops_tooling.kafka.errors import KafkaWriteError
 
 import logging

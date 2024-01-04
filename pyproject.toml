@@ -24,6 +24,7 @@ plotly = "^5.18.0"
 nbformat = "^5.9.2"
 confluent-kafka = "^2.3.0"
 kafka-python = "^2.0.2"
+protobuf = "^4.25.1"
 
 
 [tool.poetry.group.dev.dependencies]
