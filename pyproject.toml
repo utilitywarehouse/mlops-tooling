@@ -22,6 +22,8 @@ db-dtypes = "^1.1.1"
 colorlog = "^6.7.0"
 plotly = "^5.18.0"
 nbformat = "^5.9.2"
+confluent-kafka = "^2.3.0"
+kafka-python = "^2.0.2"
 
 
 [tool.poetry.group.dev.dependencies]
