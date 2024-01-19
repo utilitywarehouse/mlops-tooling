@@ -1,5 +1,6 @@
 import subprocess
 import re
+import argparse
 from mlops_tooling.logger import get_logger
 
 logger = get_logger(__name__)
@@ -152,3 +153,36 @@ def deploy(
     deploy_model(project, region, model_name, endpoint_id, model_id, machine_type)
 
     logger.info("Model deployed successfully")
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Deploy models using GCP commands.")
+    parser.add_argument("--project", required=True, help="Google Cloud project name")
+    parser.add_argument("--region", required=True, help="GCP region")
+    parser.add_argument("--model-name", required=True, help="Name of the model")
+    parser.add_argument(
+        "--model-env-vars", nargs="*", help="Environment variables for the model"
+    )
+    parser.add_argument("--repository-name", help="Name of the artifact repository")
+    parser.add_argument(
+        "--repository-description", help="Description of the artifact repository"
+    )
+    parser.add_argument(
+        "--machine-type", default="n1_standard-2", help="Machine type for deployment"
+    )
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_arguments()
+
+    deploy(
+        args.project,
+        args.region,
+        args.model_name,
+        args.model_env_vars,
+        args.repository_name,
+        args.repository_description,
+        args.machine_type,
+    )
