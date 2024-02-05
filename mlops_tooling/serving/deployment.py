@@ -34,8 +34,22 @@ def create_build(project, repository, region, image):
     run_command(command)
 
 
-def create_model(project, repository, region, image, model_name, env_vars=None):
-    command = f"gcloud ai models upload --container-ports=80 --container-predict-route='/predict' --container-health-route='/health' --region='{region}' --display-name='{model_name}' --container-image-uri='{region}-docker.pkg.dev/{project}/{repository}/{image}'"
+def create_model(
+    project,
+    repository,
+    region,
+    image,
+    model_name,
+    model_id,
+    parent_model=False,
+    env_vars=None,
+):
+    command = f"gcloud ai models upload --container-ports=80 --container-predict-route='/predict' --container-health-route='/health' --region='{region}' --display-name='{model_name}' --container-image-uri='{region}-docker.pkg.dev/{project}/{repository}/{image}' --version-aliases=default"
+
+    if parent_model:
+        command += (
+            f" --parent-model=projects/{project}/locations/{region}/models/{model_id}"
+        )
 
     if env_vars:
         add_ons = ",".join(env_vars)
@@ -44,8 +58,11 @@ def create_model(project, repository, region, image, model_name, env_vars=None):
     run_command(command)
 
 
-def create_model_endpoint(project, region, model_name):
+def create_model_endpoint(project, region, model_name, endpoint_id=None):
     command = f"gcloud ai endpoints create --project={project} --region={region} --display-name={model_name}"
+
+    if endpoint_id:
+        command += f"--endpoint-id={endpoint_id}"
 
     run_command(command)
 
@@ -71,9 +88,18 @@ def find_endpoint(project, region, endpoint_name):
 
 
 def deploy_model(
-    project, region, model_name, endpoint_id, model_id, machine_type="n1_standard-2"
+    project,
+    region,
+    endpoint_id,
+    model_id,
+    model_name,
+    deployed_model_id,
+    machine_type="n1_standard-2",
 ):
-    command = f"gcloud ai endpoints deploy-model {endpoint_id} --project='{project}' --region='{region}' --model={model_id} --traffic-split=0=100 --machine-type='{machine_type}' --display-name='{model_name}'"
+    command = f"gcloud ai endpoints deploy-model {endpoint_id} --project='{project}' --region='{region}' --model={model_id} --traffic-split=0=100 --machine-type='{machine_type}' --display-name='{model_name}' --enable-access-logging"
+
+    if deployed_model_id:
+        command += f"--deployed-model-id={deployed_model_id}"
 
     run_command(command)
 
@@ -90,7 +116,7 @@ def delete_endpoint(project, region, endpoint_id):
     run_command(command)
 
 
-def check_repository(self, repository_name, region):
+def check_repository(repository_name, region):
     command = f"gcloud artifacts repositories describe {repository_name} --location='{region}'"
 
     repository = run_command(command, capture_output=True)
@@ -102,6 +128,8 @@ def deploy(
     project,
     region,
     model_name,
+    model_id=None,
+    endpoint_id=None,
     model_env_vars=None,
     repository_name=None,
     repository_description=None,
@@ -127,27 +155,39 @@ def deploy(
     # If we have any existing models and endpoints, we delete them
     if deployed_model_id:
         deployed_endpoint_id = find_endpoint(project, region, model_name)
-
         undeploy_model(project, region, deployed_endpoint_id, deployed_model_id)
 
-        delete_endpoint(project, region, deployed_endpoint_id)
+        endpoint_exists = deployed_endpoint_id != endpoint_id
+
+        if deployed_endpoint_id != endpoint_id:
+            delete_endpoint(project, region, deployed_endpoint_id)
 
     # THen we build our docker image
     create_build(project, repository_name, region, model_name)
 
-    # Upload it to a model
+    has_parent_model = deployed_model_id == model_id if model_id else False
+
     create_model(
-        project, repository_name, region, model_name, model_name, model_env_vars
+        project,
+        repository_name,
+        region,
+        model_name,
+        model_name,
+        model_id,
+        has_parent_model,
+        model_env_vars,
     )
 
-    # Find the model's ID
-    model_id = find_model(project, region, model_name)
+    if not model_id:
+        # Find the model's ID
+        model_id = find_model(project, region, model_name)
 
-    # Create an endpoint for the model
-    create_model_endpoint(project, region, model_name)
+    if not endpoint_exists:
+        # Create an endpoint for the model
+        create_model_endpoint(project, region, model_name)
 
-    # Find the endpoint ID
-    endpoint_id = find_endpoint(project, region, model_name)
+        # Find the endpoint ID
+        endpoint_id = find_endpoint(project, region, model_name)
 
     # And deploy the model to the endpoint.
     deploy_model(project, region, model_name, endpoint_id, model_id, machine_type)
@@ -161,14 +201,30 @@ def parse_arguments():
     parser.add_argument("--region", required=True, help="GCP region")
     parser.add_argument("--model-name", required=True, help="Name of the model")
     parser.add_argument(
-        "--model-env-vars", nargs="*", help="Environment variables for the model"
-    )
-    parser.add_argument("--repository-name", help="Name of the artifact repository")
-    parser.add_argument(
-        "--repository-description", help="Description of the artifact repository"
+        "--model-id", required=False, help="Specific model ID requested"
     )
     parser.add_argument(
-        "--machine-type", default="n1_standard-2", help="Machine type for deployment"
+        "--endpoint-id", required=False, help="Specific endpoint ID requested"
+    )
+    parser.add_argument(
+        "--model-env-vars",
+        nargs="*",
+        required=False,
+        help="Environment variables for the model",
+    )
+    parser.add_argument(
+        "--repository-name", required=False, help="Name of the artifact repository"
+    )
+    parser.add_argument(
+        "--repository-description",
+        required=False,
+        help="Description of the artifact repository",
+    )
+    parser.add_argument(
+        "--machine-type",
+        default="n1_standard-2",
+        required=False,
+        help="Machine type for deployment",
     )
 
     return parser.parse_args()
@@ -181,6 +237,8 @@ if __name__ == "__main__":
         args.project,
         args.region,
         args.model_name,
+        args.model_id,
+        args.endpoint_id,
         args.model_env_vars,
         args.repository_name,
         args.repository_description,
