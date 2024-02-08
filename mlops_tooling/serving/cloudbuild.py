@@ -133,21 +133,21 @@ def write_cloudbuild_file(
         ]
 
     options:
-    logging: CLOUD_LOGGING_ONLY
+        logging: CLOUD_LOGGING_ONLY
 
     substitutions:
-    _BUILD_DESCRIPTION: "{description}"
-    _BUILD_GOOGLE_PROJECT: "{project}"
-    _BUILD_REGION: "{region}"
-    _BUILD_REPOSITORY: "{repository}"
-    _BUILD_IMAGE: "{image}"
-    _BUILD_MODEL_NAME: "{model_name}"
-    _BUILD_MODEL_ID: "{model_id}"
-    _BUILD_ENDPOINT_ID: "{endpoint_id}"
-    _BUILD_DEPLOYED_MODEL_ID: "{deployed_model_id}"
-    _BUILD_AIP_HTTP_PORT: "{http_port}"
-    _BUILD_AIP_HEALTH_ROUTE: "{health_route}"
-    _BUILD_AIP_PREDICT_ROUTE: "{predict_route}"
+        _BUILD_DESCRIPTION: "{description}"
+        _BUILD_GOOGLE_PROJECT: "{project}"
+        _BUILD_REGION: "{region}"
+        _BUILD_REPOSITORY: "{repository}"
+        _BUILD_IMAGE: "{image}"
+        _BUILD_MODEL_NAME: "{model_name}"
+        _BUILD_MODEL_ID: "{model_id}"
+        _BUILD_ENDPOINT_ID: "{endpoint_id}"
+        _BUILD_DEPLOYED_MODEL_ID: "{deployed_model_id}"
+        _BUILD_AIP_HTTP_PORT: "{http_port}"
+        _BUILD_AIP_HEALTH_ROUTE: "{health_route}"
+        _BUILD_AIP_PREDICT_ROUTE: "{predict_route}"
     """
 
     with open("cloudbuild.yaml", "w+") as f:
