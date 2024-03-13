@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include = "mlops_tooling"}]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.11"
+python = ">=3.10, <4.0"
 numpy = "^1.23"
 pandas = "^2.0.0"
 google-cloud-bigquery = "^3.9.0"
@@ -25,14 +25,10 @@ nbformat = "^5.9.2"
 
 
 [tool.poetry.group.dev.dependencies]
-tensorflow-macos = "^2.11.0"
 black = "^23.3.0"
 gensim = "^4.3.1"
 nltk = "^3.8.1"
 ipykernel = "^6.24.0"
-tensorflow-hub = "^0.13.0"
-tensorflow-metal = "^1.0.1"
-tf-models-no-deps = "^2.11.0"
 huggingface-hub = "^0.15.1"
 transformers = "^4.30.2"
 
