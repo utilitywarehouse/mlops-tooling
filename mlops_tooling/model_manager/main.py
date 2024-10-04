@@ -1,13 +1,14 @@
-from google.cloud import aiplatform
-from google.cloud import storage
-from pathlib import Path
 import glob
-import re
 import os
-import mlflow
+import re
 import uuid
+from pathlib import Path
+
+import mlflow
+from google.cloud import aiplatform, storage
 from mlflow import MlflowClient
 from mlflow.models.signature import infer_signature
+
 from mlops_tooling.logger.main import get_logger
 
 logger = get_logger(__name__)
@@ -324,7 +325,7 @@ class ModelManager:
         # mlflow.get_
         # logger.info(artifact_uri)
 
-        with mlflow.start_run(run_name=run_name):
+        with mlflow.start_run(run_name=run_name) as run:
             mlflow.set_tag("mlflow.runName", run_name)
 
             if parameters:
@@ -363,13 +364,15 @@ class ModelManager:
                     model_artifact_folder,
                 )
 
-                logger.info(f"Model uploaded.")
+                logger.info("Model uploaded.")
 
             else:
                 if artifacts:
                     mlflow.log_artifacts(artifacts)
 
                 eval(f"mlflow.{model_type}.log_model(model, '{run_name}')")
+
+        return run.info.run_id
 
     def override_upload_artifacts(
         self,
@@ -815,7 +818,7 @@ class DualModelManager:
                     model_artifact_folder,
                 )
 
-                logger.info(f"Model uploaded.")
+                logger.info("Model uploaded.")
 
             else:
                 if artifacts:

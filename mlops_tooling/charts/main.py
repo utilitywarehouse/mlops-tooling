@@ -12,7 +12,7 @@ def find_optimal_pr_threshold(y_true, y_scores):
     precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
     no_skill = sum(y_true) / len(y_true)
 
-    f1_scores = 2 * (precision * recall) / (precision + recall)
+    f1_scores = 2 * (precision * recall) / (precision + recall + 1e-14)
     optimal_threshold_index = f1_scores.argmax()
     optimal_threshold = thresholds[optimal_threshold_index]
 
