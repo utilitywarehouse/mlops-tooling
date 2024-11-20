@@ -1,6 +1,5 @@
 import re
 from pathlib import Path
-from typing import Generator
 
 import pandas as pd
 from google.cloud import bigquery
@@ -97,7 +96,7 @@ class BigQuery(BaseConnector):
 
     def query_in_chunks(
         self, sql_file: str, chunk_size: int = 10000, schema: list[str] = [], **kwargs
-    ) -> Generator[pd.DataFrame | list]:
+    ):
         """
         Returns all values from a table and outputs results in chunks.
 
