@@ -82,7 +82,7 @@ class BigQuery(BaseConnector):
 
         Parameters
         ----------
-        file_name : str
+        sql_file : str
             A filename of the SQL script.
 
         Returns
@@ -96,15 +96,19 @@ class BigQuery(BaseConnector):
         )
 
     def query_in_chunks(
-        self, sql_file: str, chunk_size: int = 10000, schema: list = [], **kwargs
+        self, sql_file: str, chunk_size: int = 10000, schema: list[str] = [], **kwargs
     ) -> Generator[pd.DataFrame | list]:
         """
         Returns all values from a table and outputs results in chunks.
 
         Parameters
         ----------
-        table_name : str
-            BigQuery table name.
+        sql_file : str
+            A filename of the SQL script.
+        chunk_size : int
+            Size of the chunks to return.
+        schema : list[str]
+            Columns the query will return.
 
         Returns
         ----------
