@@ -1,19 +1,25 @@
-from mlops_tooling.bq_connector.base_class import BaseConnector
-from google.cloud import bigquery
-from pathlib import Path
 import re
+from pathlib import Path
+from typing import Generator
+
+import pandas as pd
+from google.cloud import bigquery
+
+from mlops_tooling.bq_connector.base_class import BaseConnector
 
 try:
     CONFIG_DIR = (
         re.findall("^(\/[^\/]*\/[^\/]*\/)\/?", str(Path().absolute()))[0]
         + ".config/gcloud/prod.json"
     )
-except:
+
+except Exception:
     CONFIG_DIR = "./"
 
 try:
     SQL_DIR = str(Path().absolute().parent) + "/sql"
-except:
+
+except Exception:
     SQL_DIR = "./sql"
 
 
@@ -88,6 +94,34 @@ class BigQuery(BaseConnector):
         return self.Connector.query(sql).to_dataframe(
             create_bqstorage_client=create_bqstorage_client
         )
+
+    def query_in_chunks(
+        self, sql_file: str, chunk_size: int = 10000, schema: list = [], **kwargs
+    ) -> Generator[pd.DataFrame | list]:
+        """
+        Returns all values from a table and outputs results in chunks.
+
+        Parameters
+        ----------
+        table_name : str
+            BigQuery table name.
+
+        Returns
+        ----------
+        table: pd.DataFrame or list[Row]
+            A pandas df of the output.
+        """
+        sql = self._read_query(sql_file, **kwargs)
+        query_job = self.Connector.query(sql)
+
+        results = query_job.result(page_size=chunk_size)
+
+        for page in results.pages:
+            if schema:
+                yield pd.DataFrame([row.values() for row in page], columns=schema)
+
+            else:
+                yield page
 
     def write_query(self, table_id, dataset, job_config):
         """

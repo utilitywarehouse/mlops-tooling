@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+
 import jinja2
 import pandas as pd
 
 
 class BaseConnector(ABC):
-    def __init__(self, path: str, credentials: dict):
+    def __init__(self, path: str, credentials: str):
         self._path = path
         self._credentials = credentials
         self._sql = self._set_path()
