@@ -1,6 +1,7 @@
 import logging
-import colorlog
 import sys
+
+import colorlog
 
 
 def get_logger(name: str) -> logging.Logger:
