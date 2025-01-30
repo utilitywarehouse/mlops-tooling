@@ -18,6 +18,7 @@ Jinja2 = "^3.1.5"
 mlflow = "^2.20.0"
 plotly = "^6.0.0"
 colorlog = "^6.7.0"
+db-dtypes = "^1.4.0"
 
 [build-system]
 requires = ["poetry-core"]

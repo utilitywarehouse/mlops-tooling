@@ -352,6 +352,25 @@ notebook = ["ipython (>=8,<9)", "ipywidgets (>=8,<9)"]
 openai = ["httpx", "langchain-openai", "openai"]
 
 [[package]]
+name = "db-dtypes"
+version = "1.4.0"
+description = "Pandas Data Types for SQL systems (BigQuery, Spanner)"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "db_dtypes-1.4.0-py2.py3-none-any.whl", hash = "sha256:e97eeabced46e77a7eaa634098909f2392b29cae50b1c4900b2d9dc2c3dbf205"},
+    {file = "db_dtypes-1.4.0.tar.gz", hash = "sha256:e715cfb015da72dbd47e9066d1fed7750d844fca03cd27a2af2c242bf84c0471"},
+]
+
+[package.dependencies]
+numpy = ">=1.16.6"
+packaging = ">=17.0"
+pandas = ">=0.24.2"
+pyarrow = ">=3.0.0"
+
+[[package]]
 name = "deprecated"
 version = "1.2.18"
 description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
@@ -2841,4 +2860,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <4.0"
-content-hash = "caa82c7e024ceb9a978dda4ab6d35ad8132928770e032072f140a410cebbe88c"
+content-hash = "4eca839171555fd51fd864d3d24dcc05155a4d329b0c73d19e86298b89c20f2f"
