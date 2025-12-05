@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mlops-tooling"
-version = "0.1.1"
+version = "1.0.0"
 description = "UW internal MLOps tools, packages, and functions"
 authors = ["Ben Hicks <bhicks@uw.co.uk>"]
 license = "MIT 2.0"
@@ -8,8 +8,8 @@ readme = "README.md"
 packages = [{ include = "mlops_tooling" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <4.0"
-numpy = "<2.0.0"
+python = ">=3.11, <4.0"
+numpy = "^2.0.0"
 pandas = "^2.0.0"
 google-cloud-bigquery = "^3.29.0"
 google-cloud-aiplatform = "^1.79.0"

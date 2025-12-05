@@ -95,7 +95,13 @@ class BigQuery(BaseConnector):
         )
 
     def query_in_chunks(
-        self, sql_file: str, chunk_size: int = 10000, schema: list[str] = [], **kwargs
+        self,
+        sql_file: str,
+        chunk_size: int = 10000,
+        query_timeout: int = 3600,
+        result_timeout: int = 3600,
+        schema: list[str] = [],
+        **kwargs,
     ):
         """
         Returns all values from a table and outputs results in chunks.
@@ -115,9 +121,9 @@ class BigQuery(BaseConnector):
             A pandas df of the output.
         """
         sql = self._read_query(sql_file, **kwargs)
-        query_job = self.Connector.query(sql)
+        query_job = self.Connector.query(sql, timeout=query_timeout)
 
-        results = query_job.result(page_size=chunk_size)
+        results = query_job.result(page_size=chunk_size, timeout=result_timeout)
 
         for page in results.pages:
             if schema:
